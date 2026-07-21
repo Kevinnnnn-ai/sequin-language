@@ -1,7 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdlib.h>
 
 typedef enum {
     KEYWORD,
@@ -18,7 +18,7 @@ typedef enum {
 
 typedef struct {
     TokenType token_type;
-    char *lexeme;
+    const char *lexeme;
     int length;
     int line;
     int column;
@@ -30,25 +30,111 @@ typedef struct {
     int capacity;
 } TokenList;
 
-void AddToken(TokenList *token_list, Token *token);
+typedef struct {
+    const char *source_string;
+    int source_length;
+    int current_position;
+    int line;
+    int column;
+} Lexer;
+
+void AppendToken(TokenList *token_list, Token *token);
+void CreateToken(TokenList *token_list, TokenType token_type, const char *lexeme, int length, int line, int column);
+bool IsAtEndOfFile(const Lexer *lexer);
+char Advance(Lexer *lexer);
+char Peek(const Lexer *lexer);
+
+TokenList* Tokenize(const char *source_string, int source_length);
 char* ToString(const char *source_path, long int *string_length);
+TokenList* RunLexer(const char* source_path);
 
-void AddToken(TokenList *token_list, Token *token) {
-    if ((*token_list).token_count < (*token_list).capacity + 1) {
-        int capacity = ((*token_list).capacity + 1) * sizeof(Token);
+void AppendToken(TokenList *token_list, Token *token) {
+    if ((*token_list).token_count == (*token_list).capacity) {
+        int capacity = ((*token_list).capacity == 0) ? 8 : (*token_list).capacity * 2;
 
-        Token *temp = realloc((*token_list).token_list, capacity);
+        Token *temp = realloc((*token_list).token_list, capacity * sizeof(Token));
         if (temp == NULL) {
             return; // TODO: add error handling here.
         }
 
-        (*token_list).capacity++;
+        (*token_list).capacity = capacity;
         (*token_list).token_list = temp;
-        (*token_list).token_list[(*token_list).token_count] = *token;
-        (*token_list).token_count++;
+    }
 
-    } else {
-        return; // TODO: add error handling here.
+    (*token_list).token_list[(*token_list).token_count] = *token;
+    (*token_list).token_count++;
+}
+
+void CreateToken(TokenList *token_list, TokenType token_type, const char *lexeme, int length, int line, int column) {
+    Token token;
+    token.token_type = token_type;
+    token.lexeme = lexeme;
+    token.length = length;
+    token.line = line;
+    token.column = column;
+    AppendToken(token_list, &token);
+}
+
+bool IsAtEndOfFile(const Lexer *lexer) {
+    return (*lexer).current_position >= (*lexer).source_length;
+}
+
+char Advance(Lexer *lexer) {
+    (*lexer).column++;
+    return (*lexer).source_string[(*lexer).current_position++];
+}
+
+char Peek(const Lexer *lexer) {
+    return (*lexer).source_string[(*lexer).current_position];
+}
+
+TokenList* Tokenize(const char *source_string, int source_length) {
+    TokenList *token_list = calloc(1, sizeof(TokenList));
+    if (token_list == NULL) {
+        return NULL; // TODO: add error handling here.
+    }
+    
+    Lexer lexer;
+    lexer.source_string = source_string;
+    lexer.source_length = source_length;
+    lexer.current_position = 0;
+    lexer.line = 1;
+    lexer.column = 1;
+
+    while (!(IsAtEndOfFile(&lexer))) {
+        int lexeme_position = lexer.current_position;
+        int line = lexer.line;
+        int column = lexer.column;
+        char character = Advance(&lexer);
+
+        switch (character) { // TODO: add a default return management.
+            case ' ':
+            case '\t':
+                break;
+
+            case '\r':
+                if (Peek(&lexer) == '\n') {
+                    Advance(&lexer);
+                    CreateToken(token_list, NEWLINE, &source_string[lexeme_position], lexer.current_position - lexeme_position, line, column);
+                    lexer.column = 1;
+                    lexer.line++;
+                } else {
+                    return NULL; // TODO: add error handling here. Free token list struct and tokens themselves via a helper.
+                }
+                break;
+
+            case '\n':
+                CreateToken(token_list, NEWLINE, &source_string[lexeme_position], lexer.current_position - lexeme_position, line, column);
+                lexer.column = 1;
+                lexer.line++;
+                break;
+
+            case '#':
+                while (!(IsAtEndOfFile(&lexer)) && Peek(&lexer) != '\r' && Peek(&lexer) != '\n') {
+                    Advance(&lexer);
+                }
+                break;
+        }
     }
 }
 
@@ -86,10 +172,6 @@ char* ToString(const char *source_path, long int *string_length) {
     }
     
     return source_string;
-}
-
-TokenList* Tokenize(const char *source_string, int source_length) {
-
 }
 
 TokenList* RunLexer(const char* source_path) {
