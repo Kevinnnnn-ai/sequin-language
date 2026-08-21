@@ -38,7 +38,6 @@ typedef struct {
     int column;
 } Lexer;
 
-// helper function prototypes
 void AppendToken(TokenList *token_list, Token *token);
 void CreateToken(TokenList *token_list, TokenType token_type, const char *lexeme, int length, int line, int column);
 bool IsAtEndOfFile(const Lexer *lexer);
@@ -55,7 +54,7 @@ void AppendToken(TokenList *token_list, Token *token) {
 
         Token *temp = realloc((*token_list).token_list, capacity * sizeof(Token));
         if (temp == NULL) {
-            // TODO: add error handling
+            // add error handling
             return;
         }
 
@@ -93,7 +92,7 @@ char Peek(const Lexer *lexer) {
 TokenList* Tokenize(const char *source_string, int source_length) {
     TokenList *token_list = calloc(1, sizeof(TokenList));
     if (token_list == NULL) {
-        // TODO: add error handling
+        // add error handling
         return NULL;
     }
     
@@ -123,7 +122,7 @@ TokenList* Tokenize(const char *source_string, int source_length) {
                     lexer.column = 1;
                     lexer.line++;
                 } else {
-                    // TODO: add error handling; free token list struct & tokens via helper
+                    // add error handling; free token list struct & tokens via helper
                     return NULL;
                 }
                 break;
@@ -139,7 +138,7 @@ TokenList* Tokenize(const char *source_string, int source_length) {
                     Advance(&lexer);
                 }
                 break;
-            // TODO: add default return
+            // add default return
         }
     }
 }
@@ -147,19 +146,19 @@ TokenList* Tokenize(const char *source_string, int source_length) {
 char* ToString(const char *source_path, long int *string_length) {
     FILE *source_file = fopen(source_path, "rb");
     if (source_file == NULL) {
-        // TODO: add error handling
+        // add error handling
         return NULL;
     }
 
     if (fseek(source_file, 0, SEEK_END) != 0) {
-        // TODO: add error handling
+        // add error handling
         fclose(source_file);
         return NULL;
     }
 
     long int source_length = ftell(source_file); // NOTE: fseek & SEEK_END with ftell is not guaranteed size
     if (source_length == -1) {
-        // TODO: add error handling
+        // add error handling
         fclose(source_file);
         return NULL;
     }
@@ -168,18 +167,18 @@ char* ToString(const char *source_path, long int *string_length) {
 
     char *source_string = malloc(source_length + 1);
     if (source_string == NULL) {
-        // TODO: add error handling
+        // add error handling
         fclose(source_file);
         return NULL;
     }
 
-    // FIXME: ferror is unchecked
+    // ferror is unchecked
     size_t bytes_read = fread(source_string, sizeof(char), source_length, source_file);
     source_string[bytes_read] = '\0';
     fclose(source_file);
 
     if (string_length != NULL) {
-        // FIXME: '\0' admits they can differ; which number describes contents?
+        // '\0' admits they can differ; which number describes contents?
         *string_length = source_length;
     }
     
@@ -188,17 +187,17 @@ char* ToString(const char *source_path, long int *string_length) {
 
 TokenList* RunLexer(const char* source_path) {
     long int source_length;
-    const char *source_string = ToString(source_path, &source_length); // FIXME: this variable owns mutable malloc'd memory.
+    const char *source_string = ToString(source_path, &source_length); // this variable owns mutable malloc'd memory.
     if (source_string == NULL) {
-        // TODO: add error handling
+        // add error handling
         return NULL;
     }
 
-    free(source_string); // TODO: decide who owns source string & for how long
-    return NULL; // TODO: add return
+    free(source_string); // decide who owns source string & for how long
+    return NULL; // add return
 }
 
-// TODO: remove main; integrate lexer
+// remove main; integrate lexer
 int main() {
     const char *source_path = "C:\\Users\\Admin\\files\\projects\\sequin-lang\\examples\\example_1.sqn";
     RunLexer(source_path);
