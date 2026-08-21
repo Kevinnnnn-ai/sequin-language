@@ -4,14 +4,14 @@
 #include <string.h>
 
 typedef enum {
-    KEYWORD,
+    KEYWORD,   // keywords: I, M, E, R, A
     IDENTIFIER,
-    FLAG,
-    STRING,
+    FLAG,      // flags: &NAME
+    STRING,    // string with " ... "
     NUMBER,
-    TIMESTAMP,
-    DURATION,
-    DELIMITER,
+    TIMESTAMP, // timestamp literal with YYYY ... -DDDT##:##:##.###
+    DURATION,  // duration literal with H ... :##:##.###
+    DELIMITER, // delimeters: (, ), {, }
     NEWLINE,
     END_OF_FILE,
 } TokenType;
@@ -38,6 +38,7 @@ typedef struct {
     int column;
 } Lexer;
 
+// helper function prototypes
 void AppendToken(TokenList *token_list, Token *token);
 void CreateToken(TokenList *token_list, TokenType token_type, const char *lexeme, int length, int line, int column);
 bool IsAtEndOfFile(const Lexer *lexer);
@@ -54,7 +55,8 @@ void AppendToken(TokenList *token_list, Token *token) {
 
         Token *temp = realloc((*token_list).token_list, capacity * sizeof(Token));
         if (temp == NULL) {
-            return; // TODO: add error handling here.
+            // TODO: add error handling
+            return;
         }
 
         (*token_list).capacity = capacity;
@@ -91,7 +93,8 @@ char Peek(const Lexer *lexer) {
 TokenList* Tokenize(const char *source_string, int source_length) {
     TokenList *token_list = calloc(1, sizeof(TokenList));
     if (token_list == NULL) {
-        return NULL; // TODO: add error handling here.
+        // TODO: add error handling
+        return NULL;
     }
     
     Lexer lexer;
@@ -107,7 +110,8 @@ TokenList* Tokenize(const char *source_string, int source_length) {
         int column = lexer.column;
         char character = Advance(&lexer);
 
-        switch (character) { // TODO: add a default return management.
+        
+        switch (character) {
             case ' ':
             case '\t':
                 break;
@@ -119,7 +123,8 @@ TokenList* Tokenize(const char *source_string, int source_length) {
                     lexer.column = 1;
                     lexer.line++;
                 } else {
-                    return NULL; // TODO: add error handling here. Free token list struct and tokens themselves via a helper.
+                    // TODO: add error handling; free token list struct & tokens via helper
+                    return NULL;
                 }
                 break;
 
@@ -134,6 +139,7 @@ TokenList* Tokenize(const char *source_string, int source_length) {
                     Advance(&lexer);
                 }
                 break;
+            // TODO: add default return
         }
     }
 }
@@ -141,17 +147,20 @@ TokenList* Tokenize(const char *source_string, int source_length) {
 char* ToString(const char *source_path, long int *string_length) {
     FILE *source_file = fopen(source_path, "rb");
     if (source_file == NULL) {
-        return NULL; // TODO: add error handling here.
-    }
-
-    if (fseek(source_file, 0, SEEK_END) != 0) {
-        fclose(source_file); // TODO: add error handling here.
+        // TODO: add error handling
         return NULL;
     }
 
-    long int source_length = ftell(source_file); // NOTE: fseek and SEEK_END with ftell is not a guaranteed size in ISO C
+    if (fseek(source_file, 0, SEEK_END) != 0) {
+        // TODO: add error handling
+        fclose(source_file);
+        return NULL;
+    }
+
+    long int source_length = ftell(source_file); // NOTE: fseek & SEEK_END with ftell is not guaranteed size
     if (source_length == -1) {
-        fclose(source_file); // TODO: add error handling here.
+        // TODO: add error handling
+        fclose(source_file);
         return NULL;
     }
 
@@ -159,16 +168,19 @@ char* ToString(const char *source_path, long int *string_length) {
 
     char *source_string = malloc(source_length + 1);
     if (source_string == NULL) {
-        fclose(source_file); // TODO: add error handling here.
+        // TODO: add error handling
+        fclose(source_file);
         return NULL;
     }
 
-    size_t bytes_read = fread(source_string, sizeof(char), source_length, source_file); // FIXME: ferror is unchecked
+    // FIXME: ferror is unchecked
+    size_t bytes_read = fread(source_string, sizeof(char), source_length, source_file);
     source_string[bytes_read] = '\0';
     fclose(source_file);
 
     if (string_length != NULL) {
-        *string_length = source_length; // FIXME: The '\0' above already admits they can differ, which number describes the contents?
+        // FIXME: '\0' admits they can differ; which number describes contents?
+        *string_length = source_length;
     }
     
     return source_string;
@@ -178,14 +190,16 @@ TokenList* RunLexer(const char* source_path) {
     long int source_length;
     const char *source_string = ToString(source_path, &source_length); // FIXME: this variable owns mutable malloc'd memory.
     if (source_string == NULL) {
-        return NULL; // TODO: add error handling here.
+        // TODO: add error handling
+        return NULL;
     }
 
-    free(source_string); // TODO: decide who owns the source string and for how long.
-    return NULL; // TODO: add return here.
+    free(source_string); // TODO: decide who owns source string & for how long
+    return NULL; // TODO: add return
 }
 
-int main() { // TODO: remove main, integrate lexer into compiling process.
+// TODO: remove main; integrate lexer
+int main() {
     const char *source_path = "C:\\Users\\Admin\\files\\projects\\sequin-lang\\examples\\example_1.sqn";
     RunLexer(source_path);
 }
