@@ -9,8 +9,8 @@ typedef enum {
     FLAG,      // flags: &NAME
     STRING,    // string with " ... "
     NUMBER,
-    TIMESTAMP, // timestamp literal with YYYY ... -DDDT##:##:##.###
-    DURATION,  // duration literal with H ... :##:##.###
+    TIMESTAMP, // timestamp literal form: YYYY ... -DDDT##:##:##.###
+    DURATION,  // duration literal form: H ... :##:##.###
     DELIMITER, // delimeters: (, ), {, }
     NEWLINE,
     END_OF_FILE,
@@ -138,6 +138,7 @@ TokenList* Tokenize(const char *source_string, int source_length) {
                     Advance(&lexer);
                 }
                 break;
+
             // add default return
         }
     }
@@ -172,14 +173,12 @@ char* ToString(const char *source_path, long int *string_length) {
         return NULL;
     }
 
-    // ferror is unchecked
-    size_t bytes_read = fread(source_string, sizeof(char), source_length, source_file);
+    size_t bytes_read = fread(source_string, sizeof(char), source_length, source_file); // ferror is unchecked
     source_string[bytes_read] = '\0';
     fclose(source_file);
 
     if (string_length != NULL) {
-        // '\0' admits they can differ; which number describes contents?
-        *string_length = source_length;
+        *string_length = source_length; // '\0' admits they can differ; which number describes contents?
     }
     
     return source_string;
